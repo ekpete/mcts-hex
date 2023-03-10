@@ -20,7 +20,6 @@ class StateManager:
     def move(self, count):
         if self.winner is not None:
             return True
-
         self.state -= count
         if self.state == 0:
             self.winner = self.player

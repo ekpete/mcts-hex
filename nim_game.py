@@ -9,13 +9,16 @@ class Player:
     def move(self, state):
         if self.agent:
             sm = StateManager(state)
-            mcts = MCTS(sm)
-            return mcts.loop(5,500)
+            mcts = MCTS(sm,10)
+            mcts.loop(5,1000)
+            return mcts.get_best_move()
         else:
             if state == 1:
                 return 1
             elif state == 2:
-                return random.randint(1,2)
+                return 2
+            elif state == 3:
+                return 3
             else:
                 return random.randint(1,3)
 
@@ -33,7 +36,10 @@ def play():
 
 if __name__ == "__main__":
     wins = {'player0': 0, 'player1': 0}
-    for i in range(1000):
+    games = 1000
+    for i in range(games):
         wins[f'player{play()}'] += 1
+        if i % 100 == 0:
+            print(f'{i} games done. {1000-i} left.')
     print(wins)
 

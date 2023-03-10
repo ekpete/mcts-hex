@@ -23,7 +23,7 @@ class Player:
                 return random.randint(1,3)
 
 def play():
-    game = StateManager(10)
+    game = StateManager(20)
     mcts_agent = Player(True)
     random_agent = Player(False)
     while game.winner is None:
@@ -36,10 +36,10 @@ def play():
 
 if __name__ == "__main__":
     wins = {'player0': 0, 'player1': 0}
-    games = 1000
+    games = 10
     for i in range(games):
         wins[f'player{play()}'] += 1
-        if i % 100 == 0:
-            print(f'{i} games done. {1000-i} left.')
+        if i % 1 == 0:
+            print(f'{i} games done. {games-i} left.')
     print(wins)
 

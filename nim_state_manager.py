@@ -1,6 +1,6 @@
 class StateManager:
-    def __init__(self):
-        self.state = 21
+    def __init__(self, start_state):
+        self.state = start_state
         self.player = 0
         self.k = 3
         self.winner = None
@@ -13,6 +13,9 @@ class StateManager:
     
     def get_player(self):
         return self.player
+    
+    def get_winner(self):
+        return self.winner
     
     def move(self, count):
         if self.winner is not None:
@@ -44,7 +47,7 @@ class StateManager:
             return moves
 
 if __name__ == "__main__":
-    game = StateManager()
+    game = StateManager(20)
     print(game.get_state())
     print(game.get_possible_moves())
     print(game.get_player())

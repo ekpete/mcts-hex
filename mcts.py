@@ -1,21 +1,23 @@
 import time
-from nim_state_manager import StateManager
+from nim import StateManager
 import random
 import math
 from copy import deepcopy
 
 class MCTS:
-    def __init__(self, sm, c=1):
-        self.sm = sm
+    def __init__(self, c=1):
+        self.sm = None # state manager
         self.c = c # exploration factor
         self.root = Node()
         self.num_rollouts = 0
-        self.rollout_wins = {'player0': 0, 'player1': 0} # win tally
-        self.prob_from_root = {}
+        self.rollout_wins = {'player0': 0, 'player1': 0}
+        self.visits_from_root = {}
+        self.Qs_from_root = {}
 
-    def loop(self, time_limit, max_rollouts):
+    def loop(self, time_limit, max_rollouts, state):
         timer = True
         start = time.time()
+        self.sm = StateManager(state)
         while self.num_rollouts < max_rollouts:
             sm = deepcopy(self.sm)
             node, sm = self.select(sm)
@@ -30,14 +32,14 @@ class MCTS:
             current_time = time.time()
             if current_time - start > time_limit:
                 timer = False
+
         
+        print(f"ROOT: {self.root}")
+        print(f"ROOT children: {self.root.get_children()}")
         if self.root.has_children():
             for child in self.root.get_children():
-                self.prob_from_root[child.get_action()] = child.get_num_visited()
-
-
-    def uct(self, node, child_node):
-        return math.sqrt((math.log(node.get_num_visited()))/(1 + child_node.get_num_visited()))
+                self.visits_from_root[child.get_action()] = child.get_num_visited()
+                self.Qs_from_root[child.get_action()] = child.get_q()
 
     def select(self, sm):
         sm = sm
@@ -87,23 +89,37 @@ class MCTS:
             node.update(outcome)
             node = node.get_parent()
         node.update(outcome)
+    
+    def uct(self, node, child_node):
+        return math.sqrt((math.log(node.get_num_visited()))/(1 + child_node.get_num_visited()))
 
-    def get_action_probs(self):
-        return self.prob_from_root
+    def get_action_visits(self):
+        return self.visits_from_root
+    
+    def get_action_Qs(self):
+        return self.Qs_from_root
 
     def get_best_move(self):
-        if self.prob_from_root:
-            return max(self.prob_from_root, key = self.prob_from_root.get)
+        if self.visits_from_root:
+            return max(self.visits_from_root, key = self.visits_from_root.get)
+
+    def prune_tree(self, action):
+        for child in self.root.get_children():
+            if child.get_action() == action:
+                self.root = child
+                self.root.parent = None
+
+        print(f"NEW ROOT: {self.root}")
+        print(f'New root parent: {self.root.parent}')
 
 class Node:
     def __init__(self, action=None, parent=None):
-        self.parent = parent  # parent node
+        self.parent = parent  
         self.action = action  # action to get here
-        self.num_visited = 0  # number of times node has been visited
-        self.q_value = 0  # the current value of node state
-        self.eval = 0
-        self.children = []  # children nodes
-
+        self.num_visited = 0  # N(s,a) - visit count
+        self.q_value = 0  # Q(s,a) - q value
+        self.eval = 0 # E - rewards
+        self.children = [] 
     def has_children(self):
         if len(self.children) > 0:
             return True
@@ -130,15 +146,29 @@ class Node:
 
 
 if __name__ == "__main__":
-    sm = StateManager(10)
-    mcts = MCTS(sm, 10)
-    suggested_move = mcts.loop(5, 1000)
+    mcts = MCTS(10)
+    mcts.loop(5, 1000, 10)
     print(f'win distribution: {mcts.rollout_wins}')
     print(f'rollouts: {mcts.num_rollouts}')
     print(f'root state: {mcts.sm.get_state()}')
-    print(f'probabilities of actions from root: {mcts.get_action_probs()}')
+    print(f'visits of actions from root: {mcts.get_action_visits()}')
+    print(f'Qs of actions from root: {mcts.get_action_Qs()}')
     print(f'suggested move: {mcts.get_best_move()}')
-
+    suggested_move = mcts.get_best_move()
+    mcts.prune_tree(suggested_move)
+    mcts.loop(5, 1000, mcts.sm.get_state()-suggested_move)
+    print(f'root state: {mcts.sm.get_state()}')
+    print(f'suggested move: {mcts.get_best_move()}')
+    suggested_move = mcts.get_best_move()
+    mcts.prune_tree(suggested_move)
+    mcts.loop(5, 1000, mcts.sm.get_state()-suggested_move)
+    print(f'root state: {mcts.sm.get_state()}')
+    print(f'suggested move: {mcts.get_best_move()}')
+    suggested_move = mcts.get_best_move()
+    mcts.prune_tree(suggested_move)
+    mcts.loop(5, 1000, mcts.sm.get_state()-suggested_move)
+    print(f'root state: {mcts.sm.get_state()}')
+    print(f'suggested move: {mcts.get_best_move()}')
     
 
     

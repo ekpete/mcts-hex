@@ -1,4 +1,4 @@
-from nim_state_manager import StateManager
+from nim import StateManager
 from mcts import MCTS
 import random
 
@@ -32,11 +32,10 @@ def play():
             game.move(random_agent.move(game.get_state()))
         
     return game.winner
-   
 
 if __name__ == "__main__":
     wins = {'player0': 0, 'player1': 0}
-    games = 10
+    games = 1
     for i in range(games):
         wins[f'player{play()}'] += 1
         if i % 1 == 0:

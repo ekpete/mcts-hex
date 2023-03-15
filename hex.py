@@ -16,71 +16,20 @@ class Piece:
     def __init__(self, player = 0, board_location = None):
         self.player = player
         self.board_location = board_location
+        self.neighbors = []
 
-def game_window():
-    board5 = [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0]]
-    board5_1 = [[1,0,0,0,0],[0,0,0,0,0],[0,0,0,0,2], [0,0,0,0,0], [0,0,0,0,0]]
-    board5_2 = [[1,0,0,0,0],[0,0,1,2,0],[0,0,0,0,2], [0,0,0,0,0], [0,0,0,0,0]]
-    board5_3 = [[1,0,1,0,0],[0,0,1,2,0],[0,0,0,2,2], [0,0,0,0,0], [0,0,0,0,0]]
-    board5_4 = [[1,0,1,0,0],[0,0,1,2,0],[0,0,1,2,2], [0,0,0,0,0], [0,0,2,0,0]]
-    board5_5 = [[1,0,1,0,2],[0,0,1,2,0],[0,0,1,2,2], [0,0,1,0,0], [0,0,2,0,0]]
-    board5_6 = [[1,0,1,0,2],[0,0,1,2,0],[0,0,1,2,2], [0,0,1,2,1], [0,0,2,0,0]]
-    board5_7 = [[1,0,1,0,2],[0,0,1,2,0],[0,0,1,2,2], [0,0,1,2,1], [0,0,2,0,0]]
+def game_window(game):
     root = Tk()
     root.title("Hex")
-
     C = Canvas(root, bg="white", height=5*80, width=5*100)
     C.pack()
 
-    for i in range(4):
-
+    for board in game:
         C.delete('all')
-        print_board(C, board5)
+        print_board(C, board)
         root.update_idletasks()
         root.update()
-        time.sleep(1)
-
-        C.delete('all')
-        print_board(C, board5_1)
-        root.update_idletasks()
-        root.update()
-        time.sleep(1)
-
-        C.delete('all')
-        print_board(C, board5_2)
-        root.update_idletasks()
-        root.update()
-        time.sleep(1)
-
-        C.delete('all')
-        print_board(C, board5_3)
-        root.update_idletasks()
-        root.update()
-        time.sleep(1)
-
-        C.delete('all')
-        print_board(C, board5_4)
-        root.update_idletasks()
-        root.update()
-        time.sleep(1)
-
-        C.delete('all')
-        print_board(C, board5_5)
-        root.update_idletasks()
-        root.update()
-        time.sleep(1)
-
-        C.delete('all')
-        print_board(C, board5_6)
-        root.update_idletasks()
-        root.update()
-        time.sleep(1)
-
-        C.delete('all')
-        print_board(C, board5_7)
-        root.update_idletasks()
-        root.update()
-        time.sleep(1)
+        time.sleep(2)
 
     root.mainloop()
 
@@ -120,8 +69,16 @@ if __name__ == "__main__":
     board8 = [[1,0,2,0,0,0,1,2],[0,1,2,1,1,2,0,0],[0,0,2,0,2,1,1,0], [1,2,1,0,0,2,0,1], [2,1,0,1,0,2,2,1], [2,0,0,1,1,2,1,2], [2,2,0,0,1,1,0,2],[0,2,2,0,2,1,1,0]]
     board5 = [[1,0,2,0,0],[0,1,2,1,1],[0,0,2,0,2], [0,0,2,0,1], [0,1,1,0,2]]
     board4 = [[1,1,2,0],[0,1,2,1],[0,0,2,0], [0,0,2,0]]
-    #print_board(board5)
-    game_window()
+    board5_0 = [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0], [0,0,0,0,0], [0,0,0,0,0]]
+    board5_1 = [[1,0,0,0,0],[0,0,0,0,0],[0,0,0,0,2], [0,0,0,0,0], [0,0,0,0,0]]
+    board5_2 = [[1,0,0,0,0],[0,0,1,2,0],[0,0,0,0,2], [0,0,0,0,0], [0,0,0,0,0]]
+    board5_3 = [[1,0,1,0,0],[0,0,1,2,0],[0,0,0,2,2], [0,0,0,0,0], [0,0,0,0,0]]
+    board5_4 = [[1,0,1,0,0],[0,0,1,2,0],[0,0,1,2,2], [0,0,0,0,0], [0,0,2,0,0]]
+    board5_5 = [[1,0,1,0,2],[0,0,1,2,0],[0,0,1,2,2], [0,0,1,0,0], [0,0,2,0,0]]
+    board5_6 = [[1,0,1,0,2],[0,0,1,2,0],[0,0,1,2,2], [0,0,1,2,1], [0,0,2,0,0]]
+    board5_7 = [[1,0,1,0,2],[0,0,1,2,0],[0,0,1,2,2], [0,0,1,2,1], [0,0,2,0,0]]
+    game = [board5_0, board5_1, board5_2, board5_3, board5_4, board5_5, board5_6, board5_7]
+    game_window(game)
 
 
 

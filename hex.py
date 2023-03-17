@@ -4,36 +4,65 @@ import time
 from copy import deepcopy
 
 class StateManager:
-    def __init__(self, board_size = 7, positions = None):
-        self.board = Board(board_size, positions)
+    def __init__(self, board_size = 7, positions = None, player = 1):
+        self.board = Board(board_size, positions, player)
+        self.player = player # current players turn
+        self.winner = None
+        self.win_chain = []
+    
+    def get_player(self):
+        return self.player
+    
+    def get_winner(self):
+        return self.winner
+    
+    def move(self, player, position):
+        if self.winner is not None:
+            return True
+        self.board.place_piece(player, position)
+        win, player, chain = self.board.check_win()
+        if win:
+            self.winner = player
+            self.chain = chain
+            return True
+
+        self.player = self.board.get_current_player()
+        return False
+
+    def get_state(self):
+        return self.board.get_simple_board()
+    
+    def get_board_state(self):
+        return self.board.get_board()
+
+    def get_possible_moves(self):
+        return self.board.legal_moves()
 
 class Board:
-    def __init__(self, board_size = 7, positions = None):
+    def __init__(self, board_size = 7, positions = None, player = 1):
         self.board_size = board_size
         if positions is None:
             self.board = self.make_empty_board(board_size)
         else:
             self.board = positions
+        self.player = player
     
     def make_empty_board(self, size):
         a = [[0 for _ in range(size)] for _ in range(size)]
         return a
     
     def place_piece(self, player, position):
-        if self.board[position[0]][position[1]] == 0:
-            self.board[position[0]][position[1]] = Piece(player, position)
-            self.board[position[0]][position[1]].add_neighbours(self.board)
+        if player == self.player:
+            if self.board[position[0]][position[1]] == 0:
+                self.board[position[0]][position[1]] = Piece(player, position)
+                self.board[position[0]][position[1]].add_neighbours(self.board)
+                self.player = 2 if self.player == 1 else 1
+                print(f'move placed, next player is player {self.player}')
+            else:
+                print("occupied space")
         else:
-            print("occupied space")
-    
-    def simple_board(self):
-        b = deepcopy(self.board)
-        for i in range(len(b)):
-            for j in range(len(b)):
-                piece = b[i][j]
-                b[i][j] = piece.player if isinstance(piece, Piece) else 0
-        return b
-
+            print(f"Not player {player}'s turn. Next to move is player {self.player}")
+        
     def legal_moves(self):
         moves = []
         for i in range(len(self.board)):
@@ -42,21 +71,38 @@ class Board:
                     moves.append((i,j))
         return moves
         
+    def get_board(self):
+        return self.board
+    
+    def get_simple_board(self):
+        b = deepcopy(self.board)
+        for i in range(len(b)):
+            for j in range(len(b)):
+                piece = b[i][j]
+                b[i][j] = piece.player if isinstance(piece, Piece) else 0
+        return b
+    
+    def get_board_size(self):
+        return self.board_size
+    
+    def get_current_player(self):
+        return self.player
+        
     def check_win(self):
         for piece in self.board[0]:
             if isinstance(piece, Piece) and piece.player == 2:
                 chain = self.make_chain(piece)
                 for piece in chain:
                     if piece.position[0] == (len(self.board)-1):
-                        return 'winner is player 2', chain
+                        return True, 2, chain
         for i in range(len(self.board)):
             piece = self.board[i][0]
             if isinstance(piece, Piece) and piece.player == 1:
                 chain = self.make_chain(piece)
                 for piece in chain:
                     if piece.position[1] == (len(self.board)-1):
-                        return 'winner is player 1', chain
-        return 'no winner', []
+                        return True, 1, chain
+        return False, 0, []
     
     def make_chain(self, start_piece):
         chain = []
@@ -155,36 +201,36 @@ if __name__ == "__main__":
     game = [board5_0, board5_1, board5_2, board5_3, board5_4, board5_5, board5_6, board5_7]
     #game_window(game, [])
 
-    board = Board(7)
-    print(board.simple_board())
+    board = Board(5)
+    print(board.get_simple_board())
     board.place_piece(1, (0,0))
     print(board.legal_moves())
     board.place_piece(1, (0,1))
-    board.place_piece(1, (1,3))
+   
     print(board.check_win())
     board.place_piece(2, (2,3))
-    board.place_piece(2, (1,3))
-    board.place_piece(2, (1,1))
     board.place_piece(1, (0,2))
-    board.place_piece(1, (0,3))
     board.place_piece(2, (2,2))
-    board.place_piece(2, (3,3))
-    board.place_piece(2, (2,1))
-    board.place_piece(2, (3,1))
     board.place_piece(1, (1,0))
     board.place_piece(2, (4,0))
     board.place_piece(2, (5,0))
     board.place_piece(1, (1,4))
-    board.place_piece(1, (0,5))
-    board.place_piece(1, (0,6))
-    board.place_piece(1, (6,0))
-    board.place_piece(1, (6,1))
-    #board.place_piece(2, (6,0))
+    board.place_piece(2, (3,1))
+    board.place_piece(1, (1,1))
+    board.place_piece(2, (1,2))
+    board.place_piece(1, (0,3))
+    board.place_piece(2, (0,4))
+    board.place_piece(1, (1,3))
+    
     print('-------------')
     print(board.legal_moves())
-    print(board.simple_board())
-    winner, chain = board.check_win()
-    print(winner)
+    print(board.get_simple_board())
+    win, winner, chain = board.check_win()
+    if win:
+        print(f'Winner is player {winner}')
     new_chain = [x.position for x in chain]
-    game_window([board.simple_board()], new_chain)
+
+    b2 = Board(board.board_size, board.board)
+    print(b2.get_simple_board())
+    game_window([board.get_simple_board()], new_chain)
 

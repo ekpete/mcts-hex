@@ -1,15 +1,15 @@
 class StateManager:
-    def __init__(self, start_state):
+    def __init__(self, start_state, board=None, player = 1):
         self.state = start_state
-        self.player = 0
+        self.player = player
         self.k = 3
         self.winner = None
 
     def switch_player(self):
-        if self.player == 0:
-            self.player = 1
+        if self.player == 1:
+            self.player = 2
         else:
-            self.player = 0
+            self.player = 1
     
     def get_player(self):
         return self.player

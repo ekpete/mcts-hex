@@ -158,7 +158,7 @@ def print_board(C, board, chain):
 
 def line(pos,cr,x,y):
     if pos == 'top':
-        return -(math.sqrt(3)*cr)+(x), -cr+y-10, 0+x, -2*cr+(y-10), (math.sqrt(3)*cr)+x, -cr+y-10
+        return -(math.sqrt(3)*cr)+(x), -cr+y-10, 0+x, -2*cr+y-10, (math.sqrt(3)*cr)+x, -cr+y-10
     elif pos == 'bottom':
         return -(math.sqrt(3)*cr)+x, cr+y+10, 0+x, 2*cr+y+10, (math.sqrt(3)*cr)+x, cr+y+10
     elif pos == 'left':

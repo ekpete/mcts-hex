@@ -1,5 +1,5 @@
 import time
-from nim import StateManager
+from hex import StateManager
 import random
 import math
 from copy import deepcopy
@@ -10,20 +10,20 @@ class MCTS:
         self.c = c # exploration factor
         self.root = Node()
         self.num_rollouts = 0
-        self.rollout_wins = {'player0': 0, 'player1': 0}
+        self.rollout_wins = {'player1': 0, 'player2': 0}
         self.visits_from_root = {}
         self.Qs_from_root = {}
 
-    def loop(self, time_limit, max_rollouts, state):
+    def loop(self, board_size, time_limit=10, max_rollouts=500, board=None, player=1):
         timer = True
         start = time.time()
-        self.sm = StateManager(state)
+        self.sm = StateManager(board_size, board, player)
         while self.num_rollouts < max_rollouts:
             sm = deepcopy(self.sm)
             node, sm = self.select(sm)
             if (self.expand(node, sm)):
                 node = random.choice(node.get_children())
-                sm.move(node.get_action())
+                sm.move(sm.get_player(), node.get_action())
             
             winner = self.rollout(sm)
             self.backprop(node, winner)
@@ -34,8 +34,8 @@ class MCTS:
                 timer = False
 
         
-        print(f"ROOT: {self.root}")
-        print(f"ROOT children: {self.root.get_children()}")
+        #print(f"ROOT: {self.root}")
+        #print(f"ROOT children: {self.root.get_children()}")
         if self.root.has_children():
             for child in self.root.get_children():
                 self.visits_from_root[child.get_action()] = child.get_num_visited()
@@ -47,17 +47,27 @@ class MCTS:
         nodes_selected = 0
    
         while node.has_children():
-            current = -math.inf
+            current1 = -math.inf
+            current2 = math.inf
+
             for child in node.get_children():
                 if child.get_num_visited() == 0:
-                    sm.move(child.get_action())
+                    sm.move(sm.get_player(), child.get_action())
                     return child, sm
-                temp = child.get_q() + (self.c * self.uct(node, child))
-                if temp > current:
-                    best_child = child
-                    current = temp
+                if sm.get_player() == 1:
+                    temp = child.get_q() + (self.c * self.uct(node, child))
+                    if temp > current1:
+                        best_child = child
+                        current1 = temp
+                elif sm.get_player() ==2:
+                    temp = child.get_q() - (self.c * self.uct(node, child))
+                    if temp < current2:
+                        best_child = child
+                        current2 = temp
+
+                
             node = best_child
-            sm.move(node.get_action())
+            sm.move(sm.get_player(), node.get_action())
             nodes_selected += 1
         return node, sm
 
@@ -80,11 +90,11 @@ class MCTS:
         while True:
             moves = sm.get_possible_moves()
             move = random.choice(moves)
-            if sm.move(move):
+            if sm.move(sm.get_player(), move):
                 return sm.get_winner()
 
     def backprop(self, node, winner):
-        outcome = 1 if winner == 0 else -1
+        outcome = 1 if winner == 1 else -1
         while node.get_parent() is not None:
             node.update(outcome)
             node = node.get_parent()

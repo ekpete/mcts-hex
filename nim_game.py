@@ -8,9 +8,8 @@ class Player:
 
     def move(self, state):
         if self.agent:
-            sm = StateManager(state)
-            mcts = MCTS(sm,10)
-            mcts.loop(5,1000)
+            mcts = MCTS(10)
+            mcts.loop(board_size=state)
             return mcts.get_best_move()
         else:
             if state == 1:
@@ -34,8 +33,8 @@ def play():
     return game.winner
 
 if __name__ == "__main__":
-    wins = {'player0': 0, 'player1': 0}
-    games = 1
+    wins = {'player1': 0, 'player2': 0}
+    games = 10
     for i in range(games):
         wins[f'player{play()}'] += 1
         if i % 1 == 0:

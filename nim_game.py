@@ -26,15 +26,15 @@ def play():
     mcts_agent = Player(True)
     random_agent = Player(False)
     while game.winner is None:
-        game.move(mcts_agent.move(game.get_state()))
+        game.move(game.get_player(), mcts_agent.move(game.get_state()))
         if game.get_state() > 0:
-            game.move(random_agent.move(game.get_state()))
+            game.move(game.get_player(), random_agent.move(game.get_state()))
         
     return game.winner
 
 if __name__ == "__main__":
     wins = {'player1': 0, 'player2': 0}
-    games = 10
+    games = 50
     for i in range(games):
         wins[f'player{play()}'] += 1
         if i % 1 == 0:

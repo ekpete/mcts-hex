@@ -24,26 +24,30 @@ class Player:
 def play(size, root, C):
     game = StateManager(size)
     player1 = Player(1, True)
-    player2 = Player(2, True)
+    player2 = Player(2, False)
+    player1_moves = 0
+    player2_moves = 0
 
 
     while game.get_winner() is None:
         game.move(player1.get_player() ,player1.move(game))
+        player1_moves+=1
         update_board(root, C, game)
         time.sleep(0.1)
 
         if game.get_winner() is None:
             game.move(player2.get_player() ,player2.move(game))
+            player2_moves+=1
             update_board(root, C, game)
             time.sleep(0.1)
 
     update_board(root, C, game)
 
         
-    return game.winner
+    return game.winner, player1_moves, player2_moves
 
 if __name__ == "__main__":
-    board_size = 5
+    board_size = 10
 
     root = Tk()
     root.title("Hex")
@@ -51,9 +55,15 @@ if __name__ == "__main__":
     C.pack()
 
     wins = {'player1': 0, 'player2': 0}
-    games = 10
+    player1_moves = 0
+    player2_moves = 0
+    games = 3
     for i in range(games):
-        wins[f'player{play(board_size, root, C)}'] += 1
-        if i % 1 == 0:
+        player, player1_m, player2_m = play(board_size, root, C)
+        wins[f'player{player}'] += 1
+        player1_moves += player1_m
+        player2_moves += player2_m
+        if i % 10 == 0:
             print(f'{i} games done. {games-i} left.')
     print(wins)
+    print(f'Average moves: {player1_moves/games}')

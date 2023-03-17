@@ -17,7 +17,7 @@ class StateManager:
     def get_winner(self):
         return self.winner
     
-    def move(self, count):
+    def move(self, player, count):
         if self.winner is not None:
             return True
         self.state -= count

@@ -59,7 +59,6 @@ class Board:
                 self.board[position[0]][position[1]] = Piece(player, position)
                 self.board[position[0]][position[1]].add_neighbours(self.board)
                 self.player = 2 if self.player == 1 else 1
-                print(f'move placed, next player is player {self.player}')
             else:
                 print("occupied space")
         else:

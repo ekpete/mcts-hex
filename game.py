@@ -24,7 +24,7 @@ class Player:
 def play(size, root, C):
     game = StateManager(size)
     player1 = Player(1, True)
-    player2 = Player(2)
+    player2 = Player(2, True)
 
 
     while game.get_winner() is None:
@@ -43,7 +43,7 @@ def play(size, root, C):
     return game.winner
 
 if __name__ == "__main__":
-    board_size = 4
+    board_size = 5
 
     root = Tk()
     root.title("Hex")

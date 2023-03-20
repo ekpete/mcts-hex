@@ -14,9 +14,10 @@ class MCTS:
         self.visits_from_root = {}
         self.Qs_from_root = {}
 
-    def loop(self, board_size, time_limit=10, max_rollouts=500, board=None, player=1):
+    def loop(self, board_size, time_limit=10, max_rollouts=1000, board=None, player=1):
         timer = True
         start = time.time()
+        self.board_size = board_size
         self.sm = StateManager(board_size, board, player)
         while self.num_rollouts < max_rollouts:
             sm = deepcopy(self.sm)
@@ -24,32 +25,25 @@ class MCTS:
             if (self.expand(node, sm)):
                 node = random.choice(node.get_children())
                 sm.move(sm.get_player(), node.get_action())
-            
             winner = self.rollout(sm)
             self.backprop(node, winner)
-
             self.rollout_wins[f'player{winner}'] += 1
             current_time = time.time()
             if current_time - start > time_limit:
                 timer = False
-
-        
-        #print(f"ROOT: {self.root}")
-        #print(f"ROOT children: {self.root.get_children()}")
         if self.root.has_children():
             for child in self.root.get_children():
                 self.visits_from_root[child.get_action()] = child.get_num_visited()
                 self.Qs_from_root[child.get_action()] = child.get_q()
+        self.num_rollouts = 0
 
     def select(self, sm):
         sm = sm
         node = self.root
         nodes_selected = 0
-   
         while node.has_children():
             current1 = -math.inf
             current2 = math.inf
-
             for child in node.get_children():
                 if child.get_num_visited() == 0:
                     sm.move(sm.get_player(), child.get_action())
@@ -59,13 +53,11 @@ class MCTS:
                     if temp > current1:
                         best_child = child
                         current1 = temp
-                elif sm.get_player() ==2:
+                elif sm.get_player() == 2:
                     temp = child.get_q() - (self.c * self.uct(node, child))
                     if temp < current2:
                         best_child = child
                         current2 = temp
-
-                
             node = best_child
             sm.move(sm.get_player(), node.get_action())
             nodes_selected += 1
@@ -83,10 +75,8 @@ class MCTS:
     def rollout(self, sm):
         self.num_rollouts += 1
         sm = sm
-
         if sm.winner is not None:
             return sm.get_winner()
-        
         while True:
             moves = sm.get_possible_moves()
             move = random.choice(moves)
@@ -100,6 +90,14 @@ class MCTS:
             node = node.get_parent()
         node.update(outcome)
     
+    def prune_tree(self, action):
+        for child in self.root.get_children():
+            if child.get_action() == action:
+                self.root = child
+                self.root.parent = None
+        self.visits_from_root = {}
+        self.Qs_from_root = {}
+    
     def uct(self, node, child_node):
         return math.sqrt((math.log(node.get_num_visited()))/(1 + child_node.get_num_visited()))
 
@@ -112,15 +110,18 @@ class MCTS:
     def get_best_move(self):
         if self.visits_from_root:
             return max(self.visits_from_root, key = self.visits_from_root.get)
-
-    def prune_tree(self, action):
-        for child in self.root.get_children():
-            if child.get_action() == action:
-                self.root = child
-                self.root.parent = None
-
-        print(f"NEW ROOT: {self.root}")
-        print(f'New root parent: {self.root.parent}')
+    
+    def get_visit_probs(self):
+        visits = deepcopy(self.visits_from_root)
+        summ = sum(visits.values())
+        k = self.board_size
+        for i in range(k):
+            for j in range(k):
+                if (i,j) in visits:
+                    visits[(i,j)] = visits[(i,j)]/summ
+                else:
+                    visits[(i,j)] = 0
+        return tuple(dict(sorted(visits.items())).values())
 
 class Node:
     def __init__(self, action=None, parent=None):
@@ -156,8 +157,9 @@ class Node:
 
 
 if __name__ == "__main__":
-    mcts = MCTS(10)
-    mcts.loop(5, 1000, 10)
+    game = StateManager(3)
+    mcts = MCTS()
+    mcts.loop(board_size=game.board.board_size, board=game.get_board_state(), player=game.get_player())
     print(f'win distribution: {mcts.rollout_wins}')
     print(f'rollouts: {mcts.num_rollouts}')
     print(f'root state: {mcts.sm.get_state()}')
@@ -166,19 +168,11 @@ if __name__ == "__main__":
     print(f'suggested move: {mcts.get_best_move()}')
     suggested_move = mcts.get_best_move()
     mcts.prune_tree(suggested_move)
-    mcts.loop(5, 1000, mcts.sm.get_state()-suggested_move)
-    print(f'root state: {mcts.sm.get_state()}')
+    game.move(1, suggested_move)
+    print(game.get_board_state())
+    print(game.get_player())
+    mcts.loop(board_size=game.board.board_size, board=game.get_board_state(), player=game.get_player())
+    print(f'visits of actions from root: {mcts.get_action_visits()}')
     print(f'suggested move: {mcts.get_best_move()}')
-    suggested_move = mcts.get_best_move()
-    mcts.prune_tree(suggested_move)
-    mcts.loop(5, 1000, mcts.sm.get_state()-suggested_move)
-    print(f'root state: {mcts.sm.get_state()}')
-    print(f'suggested move: {mcts.get_best_move()}')
-    suggested_move = mcts.get_best_move()
-    mcts.prune_tree(suggested_move)
-    mcts.loop(5, 1000, mcts.sm.get_state()-suggested_move)
-    print(f'root state: {mcts.sm.get_state()}')
-    print(f'suggested move: {mcts.get_best_move()}')
-    
 
     

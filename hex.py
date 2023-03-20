@@ -31,11 +31,18 @@ class StateManager:
         self.player = self.board.get_current_player()
         return False
 
-    def get_state(self):
+    def get_simple_board(self):
         return self.board.get_simple_board()
     
     def get_board_state(self):
         return self.board.get_board()
+    
+    def get_flattened_board(self):
+        flattened = [self.get_player()]
+        for row in self.get_simple_board():
+            for item in row:
+                flattened.append(item)
+        return tuple(flattened)
 
     def get_possible_moves(self):
         return self.board.legal_moves()
@@ -137,7 +144,7 @@ class Piece:
 
 def update_board(root, C, game):
     C.delete('all')
-    print_board(C, game.get_state(), game.get_win_chain())
+    print_board(C, game.get_simple_board(), game.get_win_chain())
     w = game.get_winner()
     if w == 1 or w == 2:
         C.create_text(C.winfo_width()/2,C.winfo_height()-20,fill="black",font="Helvetica 15 bold", text=f"Player {w} wins!")

@@ -18,7 +18,7 @@ def play(size, rbuf, root, C):
 
 if __name__ == "__main__":
     board_size = 4
-    games = 2
+    games = 1
     root = Tk()
     root.title("Hex")
     C = Canvas(root, bg="white", height=board_size*80, width=board_size*100)

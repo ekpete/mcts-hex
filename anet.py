@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn 
 import torch.optim as optim
-import torch.nn.functional as F 
 from torch.utils.data import DataLoader, TensorDataset 
 import numpy as np
 
@@ -13,68 +12,59 @@ tensor_x = torch.Tensor(x)
 tensor_y = torch.Tensor(y)
 
 dataset = TensorDataset(tensor_x, tensor_y)
-dataloader = DataLoader(dataset)
-
+batch_size = 4
+dataloader = DataLoader(dataset, shuffle=True, batch_size=batch_size)
 
 class NN(nn.Module):
-    def __init__(self, input_size, num_classes):
-        super(NN, self).__init__()
-        self.fc1 = nn.Linear(input_size, input_size)
-        self.fc2 = nn.Linear(input_size, num_classes)
+    def __init__(self, input_size, layers_data, learning_rate=0.1, optimizer=optim.Adam):
+        super().__init__()
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.to(self.device)
+        self.layers = nn.ModuleList()
+        for size, activation in layers_data:
+            self.layers.append(nn.Linear(input_size, size))
+            input_size = size
+            if activation is not None:
+                self.layers.append(activation)
+        
+        self.learning_rate = learning_rate
+        self.optimizer = optimizer(params=self.parameters(), lr=learning_rate)
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = (self.fc2(x))
-        return x 
+        for layer in self.layers:
+            x = layer(x)
+        return x
 
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-batch_size = 4
 input_size = 17 
-num_classes = 16
+dense_size = 30
+output_size = 16
+
 learning_rate = 0.1
 num_epochs = 40
+layers_data=[(dense_size, nn.ReLU()), (output_size, None)]
 
-model = NN(input_size=input_size, num_classes=num_classes).to(device)
+model = NN(input_size=input_size, layers_data=layers_data, learning_rate=learning_rate, optimizer=optim.Adam)
 loss_fn = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
-optimizers = {"Adam": optim.Adam(model.parameters(), lr=learning_rate), 
-              "Adagrad": optim.Adagrad(model.parameters(), lr=learning_rate), 
-              "SGD": optim.SGD(model.parameters(), lr=learning_rate), 
-              "RMSprop": optim.RMSprop(model.parameters(), lr=learning_rate)}
-
-optimizer = optimizers["Adam"]
 
 losses = []
 for epoch in range(num_epochs):
     print(f"Epoch: {epoch}")
     for x_train, y_train in dataloader:
-        # Get data to cuda if possible
-        x_train = x_train.to(device=device)
-        y_train = y_train.to(device=device)
-        # forward propagation
+        x_train = x_train.to(device=model.device)
+        y_train = y_train.to(device=model.device)
         y_pred = model(x_train)
         loss = loss_fn(y_pred, y_train)
         losses.append(loss.item())
-        # zero previous gradients
-        optimizer.zero_grad()
-        # back-propagation
+        model.optimizer.zero_grad()
         loss.backward()
-        # gradient descent or adam step
-        optimizer.step()
+        model.optimizer.step()
+    
 torch.set_printoptions(sci_mode=False)
 print("Testing:")
 moves = model(torch.Tensor(np.array([1., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]))).tolist()
-new_moves = []
-for move in moves:
-    if move <0:
-        new_moves.append(0)
-    else:
-        new_moves.append(move)
-
-print(new_moves)
-
+moves = [0 if i < 0 else i for i in moves]
+print(moves)
+print(model)
 
 import matplotlib.pyplot as plt
 plt.plot(losses)
@@ -82,29 +72,3 @@ plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.title("Learning rate %f"%(learning_rate))
 plt.show()
-
-
-def check_accuracy(loader, model):
-    num_correct = 0
-    num_samples = 0
-    model.eval()
-
-    with torch.no_grad():
-        for x, y in loader:
-            x = x.to(device=device)
-            y = y.to(device=device)
-            x = x.reshape(x.shape[0], -1)
-
-            scores = model(x)
-            _, predictions = scores.max(1)
-            num_correct += (predictions == y).sum()
-            num_samples += predictions.size(0)
-
-        print(
-            f"Got {num_correct} / {num_samples} with accuracy"
-            f" {float(num_correct) / float(num_samples) * 100:.2f}"
-        )
-
-    model.train()
-
-#check_accuracy(dataloader, model)

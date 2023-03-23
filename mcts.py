@@ -10,6 +10,7 @@ class MCTS:
         self.c = c # exploration factor
         self.root = Node()
         self.num_rollouts = 0
+        self.total_rollouts = 0
         self.rollout_wins = {'player1': 0, 'player2': 0}
         self.visits_from_root = {}
         self.Qs_from_root = {}
@@ -74,6 +75,7 @@ class MCTS:
 
     def rollout(self, sm):
         self.num_rollouts += 1
+        self.total_rollouts += 1
         sm = sm
         if sm.winner is not None:
             return sm.get_winner()

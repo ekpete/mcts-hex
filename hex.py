@@ -142,16 +142,16 @@ class Piece:
 
 """Functions to print Hex board"""
 
-def update_board(root, C, game):
+def gui_update_board(root, C, game):
     C.delete('all')
-    print_board(C, game.get_simple_board(), game.get_win_chain())
+    gui_print_board(C, game.get_simple_board(), game.get_win_chain())
     w = game.get_winner()
     if w == 1 or w == 2:
         C.create_text(C.winfo_width()/2,C.winfo_height()-20,fill="black",font="Helvetica 15 bold", text=f"Player {w} wins!")
     root.update_idletasks()
     root.update()
 
-def print_board(C, board, chain):
+def gui_print_board(C, board, chain):
     colours = ['white', 'dodgerblue', 'red']
     for i in range(len(board)):
         C.create_line(line('top', 15, 100+((2*i))*math.sqrt(3)*15, 100+(0*2)*((3/2)*15)), width = 4, fill = 'red')

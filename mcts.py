@@ -82,6 +82,7 @@ class MCTS:
         while True:
             moves = sm.get_possible_moves()
             move = random.choice(moves)
+            #TODO choice of move is epsilon greedy from random and 1-epsilon for anet move
             if sm.move(sm.get_player(), move):
                 return sm.get_winner()
 

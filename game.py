@@ -1,10 +1,11 @@
-from hex import StateManager, gui_update_board
+from hex import StateManager, gui_update_board, gui_print_board
 from mcts import MCTS
 from anet import ANET
 from tkinter import Tk, Canvas
 import torch.nn as nn 
 import torch.optim as optim 
 from tqdm import tqdm
+import math
 
 def play(size, max_rollouts, rbuf, root, C, c):
     mcts = MCTS(c)
@@ -44,22 +45,33 @@ def games(settings):
 
     save_interval = games/m
     anet = ANET(input_size=anet_input, layers=layers_data, learning_rate=learning_rate, optimizer=optimizer)
-    #anet.save_model(g)
+    anet.save_model(0)
+
+    board1 = (1,1,1,2,0,0,2,1,2,1,0,2,1,1,2,0,2,0,0,0,0,0,0,0,0,0)
+    legal = (0,0,0,1,1,0,0,0,0,1,0,0,0,0,1,0,1,1,1,1,1,1,1,1,1)
 
     for g in tqdm(range(games), desc="Progress:"):
         winner = play(board_size, max_rollouts, rbuf, root, C, c)
-        #if len(rbuf['board'])>settings['batch_size']:
-        anet.train(rbuf, batch_size)
+        if len(rbuf['board'])>batch_size:
+            anet.train(rbuf, batch_size)
         if (int(g+1) % int(save_interval) == 0) and save:
-            anet.save_model(g)
+            anet.save_model(g+1)
+            #print(anet.get_best_move(board1, legal))
         wins[f'player{winner}'] += 1
 
     print(f"\nPlayer 1: {wins['player1']} wins.\nPlayer 2: {wins['player2']} wins.")
-    #print(f"{len(rbuf['board'])}")
+    
     anet.print_losses()
-    #board1 = (2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0, 0, 0, 0)
-    #legal = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1)
-    #print(anet.get_best_move(board1, legal))
+    bord1_gui = [[1,1,2,0,0],[2,1,2,1,0],[2,1,1,2,0],[2,0,0,0,0],[0,0,0,0,0]]
+  
+
+    C.delete('all')
+    gui_print_board(C, bord1_gui,[])
+    root.update_idletasks()
+    root.update()
+
+    print(f"RBUF size: {len(rbuf['board'])}")
+    print(anet.predicted_action_probs(board1, legal))
    
     
     root.mainloop()
@@ -67,24 +79,16 @@ def games(settings):
 
 if __name__ == "__main__":
     settings = {
-        'Number of RL episodes': 20,
-        'Board size': 4,
+        'Number of RL episodes': 400,
+        'Board size': 5,
         'Max rollout games': 500,
         'Exploration factor': 1,
-        'ANET learning rate': 0.001,
-        'ANET layers data': [(30, nn.ReLU()), (16, nn.Softmax(dim=-1))],
+        'ANET learning rate': 0.01,
+        'ANET layers data': [(25, nn.ReLU()),(25, None)],
         'ANET optimizer': optim.Adam,
         'ANET batch size': 128,
-        'Save ANETs': False,
+        'Save ANETs': True,
         'M cached ANETs': 5,
     }
     games(settings)
-
-    moves = []
-    k=4
-
-    for i in range(k):
-        for j in range(k):
-            moves.append((i,j))
-   
             

@@ -1,13 +1,15 @@
 import time
 from hex import StateManager
+from anet import ANET
 import random
 import math
 from copy import deepcopy
 
 class MCTS:
-    def __init__(self, c=1):
+    def __init__(self, anet, c=1):
         self.sm = None # state manager
         self.c = c # exploration factor
+        self.anet = anet
         self.root = Node()
         self.num_rollouts = 0
         self.total_rollouts = 0
@@ -15,9 +17,10 @@ class MCTS:
         self.visits_from_root = {}
         self.Qs_from_root = {}
 
-    def loop(self, board_size, time_limit=10, max_rollouts=1000, board=None, player=1):
+    def loop(self, anet, board_size, time_limit=10, max_rollouts=1000, board=None, player=1):
         timer = True
         start = time.time()
+        self.anet = anet
         self.board_size = board_size
         self.sm = StateManager(board_size, board, player)
         while self.num_rollouts < max_rollouts:
@@ -80,10 +83,12 @@ class MCTS:
         if sm.winner is not None:
             return sm.get_winner()
         while True:
-            moves = sm.get_possible_moves()
-            move = random.choice(moves)
-            #TODO choice of move is epsilon greedy from random and 1-epsilon for anet move
-            if sm.move(sm.get_player(), move):
+            epsilon = 30
+            random_move = random.choice(sm.get_possible_moves())
+            anet_move = self.anet.get_move(sm.get_flattened_board())
+            moves = [anet_move, random_move]
+            move = random.choices(moves, weights=(100-epsilon, epsilon), k=1)
+            if sm.move(sm.get_player(), move[0]):
                 return sm.get_winner()
 
     def backprop(self, node, winner):

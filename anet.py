@@ -13,6 +13,7 @@ class ANET():
         self.losses = []
         self.rbuf_board = []
         self.rbuf_actions = []
+        self.get_all_moves(int(math.sqrt(input_size-1)))
  
     def update_dataset(self, rbuf, batch_size=64):
         self.rbuf_board = rbuf['board']
@@ -50,17 +51,26 @@ class ANET():
         moves = [x/summ for x in moves]
         return moves
     
-    def get_best_move(self, board, legal_moves):
-        moves = self.model(torch.Tensor(np.array(board))).tolist()
+    def get_move(self, board):
+        moves = nn.Softmax(dim=0)(self.model(torch.Tensor(np.array(board)))).tolist()
+        legal_moves = []
+        for pos in board[1:]:
+            legal_moves.append(1) if int(pos)==0 else legal_moves.append(0)
         for i in range(len(moves)):
             moves[i] = moves[i]*legal_moves[i]
+        return self.all_moves[moves.index(max(moves))]
         summ = sum(moves)
         moves = [x/summ for x in moves]
-        #move = moves.index(max(moves))
-        return moves
+        return self.all_moves[moves.index(max(moves))]
+    
+    def get_all_moves(self, k):
+        self.all_moves = []
+        for i in range(k):
+            for j in range(k):
+                self.all_moves.append((i,j))
 
     def save_model(self, interval_number):
-        torch.save(self.model.state_dict(), f"saved_models/model_game_{interval_number}.pt")
+        torch.save(self.model.state_dict(), f"saved_models/actor_{interval_number}.pt")
 
     def print_losses(self):
         plt.plot(self.losses)
@@ -74,6 +84,7 @@ class TOPP_agent():
         self.model = NN(input_size=(board_size**2)+1)
         self.model.load_state_dict(torch.load(PATH))
         self.model.eval()
+        self.name = PATH[13:-3]
         self.get_all_moves(board_size)
     
     def get_move(self, board):
@@ -83,8 +94,6 @@ class TOPP_agent():
             legal_moves.append(1) if int(pos)==0 else legal_moves.append(0)
         for i in range(len(moves)):
             moves[i] = moves[i]*legal_moves[i]
-        return self.all_moves[moves.index(max(moves))]
-    
         summ = sum(moves)
         moves = [x/summ for x in moves]
         return self.all_moves[moves.index(max(moves))]

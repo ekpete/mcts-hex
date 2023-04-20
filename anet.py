@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
+#feed forward network that takes board states as input and produces suggestions for moves.
 class ANET():
     def __init__(self, input_size, layers, learning_rate=0.01, optimizer=optim.Adam):
         self.model = NN(input_size, layers, learning_rate, optimizer)
@@ -14,7 +15,8 @@ class ANET():
         self.rbuf_board = []
         self.rbuf_actions = []
         self.get_all_moves(int(math.sqrt(input_size-1)))
- 
+    
+    #update the dataset with new data
     def update_dataset(self, rbuf, batch_size=64):
         self.rbuf_board = rbuf['board']
         self.rbuf_actions = rbuf['action_probs']
@@ -22,7 +24,8 @@ class ANET():
         tensor_y = torch.Tensor(np.array(self.rbuf_actions))
         self.dataset = TensorDataset(tensor_x, tensor_y)
         self.dataloader = DataLoader(self.dataset, shuffle=True, batch_size=batch_size)
-      
+    
+    #train the network on a mini-batch from the current dataset
     def train(self, rbuf, batch_size):
         num_epochs = 1
         self.update_dataset(rbuf, batch_size)
@@ -32,17 +35,13 @@ class ANET():
             x_train = x_train.to(device=self.model.device)
             y_train = y_train.to(device=self.model.device)
             y_pred = self.model(x_train)
-            # print("-------")
-            # print(x_train[0])
-            # print(y_train[0])
-            # print(y_pred[0])
-            # print(loss_fn(y_pred, y_train))
             loss = loss_fn(y_pred, y_train)
             self.losses.append(loss.item())
             self.model.optimizer.zero_grad()
             loss.backward()
             self.model.optimizer.step()
 
+    #return the action probabilities based on input board
     def predicted_action_probs(self, board, legal_moves):
         moves = self.model(torch.Tensor(np.array(board))).tolist()
         for i in range(len(moves)):
@@ -50,7 +49,8 @@ class ANET():
         summ = sum(moves)
         moves = [x/summ for x in moves]
         return moves
-    
+
+    #get the predicted best move based on the input board
     def get_move(self, board):
         moves = nn.Softmax(dim=0)(self.model(torch.Tensor(np.array(board)))).tolist()
         legal_moves = []
@@ -59,10 +59,8 @@ class ANET():
         for i in range(len(moves)):
             moves[i] = moves[i]*legal_moves[i]
         return self.all_moves[moves.index(max(moves))]
-        summ = sum(moves)
-        moves = [x/summ for x in moves]
-        return self.all_moves[moves.index(max(moves))]
     
+    #get all the moves from starting state
     def get_all_moves(self, k):
         self.all_moves = []
         for i in range(k):
@@ -70,7 +68,7 @@ class ANET():
                 self.all_moves.append((i,j))
 
     def save_model(self, interval_number):
-        torch.save(self.model.state_dict(), f"saved_models/actor_{interval_number}.pt")
+        torch.save(self.model.state_dict(), f"saved_models_demo/actor_{interval_number}.pt")
 
     def print_losses(self):
         plt.plot(self.losses)
@@ -80,13 +78,14 @@ class ANET():
         plt.show()
 
 class TOPP_agent():
-    def __init__(self, board_size, PATH):
-        self.model = NN(input_size=(board_size**2)+1)
+    def __init__(self, board_size,layers, PATH):
+        self.model = NN(input_size=(board_size**2)+1, layers=layers)
         self.model.load_state_dict(torch.load(PATH))
         self.model.eval()
         self.name = PATH[13:-3]
         self.get_all_moves(board_size)
     
+    #get the predicted best move based on input board
     def get_move(self, board):
         moves = nn.Softmax(dim=0)(self.model(torch.Tensor(np.array(board)))).tolist()
         legal_moves = []
@@ -104,8 +103,9 @@ class TOPP_agent():
             for j in range(k):
                 self.all_moves.append((i,j))
 
+#the neural network
 class NN(nn.Module):
-    def __init__(self, input_size, layers=[(25, nn.ReLU()),(25, None)], learning_rate=0.01, optimizer=optim.Adam):
+    def __init__(self, input_size, layers, learning_rate=0.01, optimizer=optim.Adam):
         super().__init__()
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
@@ -123,9 +123,8 @@ class NN(nn.Module):
             x = layer(x)
         return x
 
-
+"""
 if __name__ == "__main__":
-    """
 
     model = NN(26, [(30, nn.ReLU()), (25, None)])
     model.load_state_dict(torch.load("saved_models/model_game_20.pt"))
@@ -136,18 +135,5 @@ if __name__ == "__main__":
 
     moves = model(torch.Tensor(np.array(board1))).tolist()
     print(moves)
-    """
 
-    #board1 = (1,1,1,2,0,0,2,1,2,1,0,2,1,1,2,0,2,0,0,0,0,0,0,0,0,0)
-    #t0 = TOPP_agent(5, "saved_models/model_game_0.pt")
-    #print(t0.get_move(board1))
-
-    t = torch.Tensor([0,0,0,1,1,-3,-5,-2,0,1,0,0,0,0,1,0,1,1,1,1,1,1,1,1,1])
-    t2  = torch.Tensor([0.0274, 0.0137, 0.0076, 0.0274, 0.0655, 0.0076, 0.0076, 0.0396, 0.0137,
-        0.0473, 0.0655, 0.0686, 0.0137, 0.0076, 0.0442, 0.0351, 0.0000, 0.1113,
-        0.0137, 0.0549, 0.0000, 0.0000, 0.2652, 0.0442, 0.0183])
-    t3 = torch.Tensor([-0.3251, -0.0478, -0.1883, -0.1321, 0.5158, 0.0390, -0.0827, 0.4843, 0.9044,
-        0.1550, -0.0356, 0.0850, 0.5414, 0.1250, -0.6865, 0.6674, -0.5220, -0.1984,
-        0.0137, 0.0549, 0.0000, 0.0000, 0.2652, 0.0442, 0.0183])
-    print(nn.CrossEntropyLoss()(t3,t2))
-
+"""

@@ -17,6 +17,7 @@ class MCTS:
         self.visits_from_root = {}
         self.Qs_from_root = {}
 
+    #run mcts for a specified number of rollout games. Select -> expand -> rollout -> backprop and update. 
     def loop(self, anet, board_size, time_limit=10, max_rollouts=1000, board=None, player=1):
         timer = True
         start = time.time()
@@ -41,6 +42,7 @@ class MCTS:
                 self.Qs_from_root[child.get_action()] = child.get_q()
         self.num_rollouts = 0
 
+    #select the best node according to the tree policy. Input: state manager (sm).
     def select(self, sm):
         sm = sm
         node = self.root
@@ -67,6 +69,7 @@ class MCTS:
             nodes_selected += 1
         return node, sm
 
+    #generate child nodes for the input node
     def expand(self, node, sm):
         legal_actions = sm.get_possible_moves()
         if len(legal_actions) > 0:
@@ -76,6 +79,7 @@ class MCTS:
         else:
             return False
 
+    #rollout game from the current node in the state manager. Choose moves based on anet with probability 1-epsilon. Return winner of rollout game.
     def rollout(self, sm):
         self.num_rollouts += 1
         self.total_rollouts += 1
@@ -83,14 +87,15 @@ class MCTS:
         if sm.winner is not None:
             return sm.get_winner()
         while True:
-            epsilon = 30
-            random_move = random.choice(sm.get_possible_moves())
-            anet_move = self.anet.get_move(sm.get_flattened_board())
-            moves = [anet_move, random_move]
-            move = random.choices(moves, weights=(100-epsilon, epsilon), k=1)
-            if sm.move(sm.get_player(), move[0]):
+            epsilon = 0.3
+            if random.random() < epsilon:
+                move = random.choice(sm.get_possible_moves())
+            else:
+                move = self.anet.get_move(sm.get_flattened_board())
+            if sm.move(sm.get_player(), move):
                 return sm.get_winner()
 
+    #go up the tree and update eval and visit counts for every node until root.
     def backprop(self, node, winner):
         outcome = 1 if winner == 1 else -1
         while node.get_parent() is not None:
@@ -98,6 +103,7 @@ class MCTS:
             node = node.get_parent()
         node.update(outcome)
     
+    #after an action is chosen, retain the tree with new state as root, and discard the rest. 
     def prune_tree(self, action):
         for child in self.root.get_children():
             if child.get_action() == action:
@@ -106,6 +112,7 @@ class MCTS:
         self.visits_from_root = {}
         self.Qs_from_root = {}
     
+    #UCT which balanced exploration and exploitation. 
     def uct(self, node, child_node):
         return math.sqrt((math.log(node.get_num_visited()))/(1 + child_node.get_num_visited()))
 
@@ -131,6 +138,7 @@ class MCTS:
                     visits[(i,j)] = 0
         return tuple(dict(sorted(visits.items())).values())
 
+
 class Node:
     def __init__(self, action=None, parent=None):
         self.parent = parent  
@@ -139,6 +147,7 @@ class Node:
         self.q_value = 0  # Q(s,a) - q value
         self.eval = 0 # E - rewards
         self.children = [] 
+        
     def has_children(self):
         if len(self.children) > 0:
             return True
@@ -163,7 +172,7 @@ class Node:
     def get_parent(self):
         return self.parent
 
-
+"""
 if __name__ == "__main__":
     game = StateManager(3)
     mcts = MCTS()
@@ -182,5 +191,5 @@ if __name__ == "__main__":
     mcts.loop(board_size=game.board.board_size, board=game.get_board_state(), player=game.get_player())
     print(f'visits of actions from root: {mcts.get_action_visits()}')
     print(f'suggested move: {mcts.get_best_move()}')
-
-    
+ 
+"""

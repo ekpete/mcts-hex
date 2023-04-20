@@ -7,6 +7,7 @@ import torch.optim as optim
 from tqdm import tqdm
 import math
 
+#play one game of HEX where moves are chosen by MCTS.
 def play(size, max_rollouts, rbuf, root, C, c, anet, print_board):
     mcts = MCTS(anet, c)
     game = StateManager(size)
@@ -24,7 +25,8 @@ def play(size, max_rollouts, rbuf, root, C, c, anet, print_board):
     #print(f'Rollout games this game: {mcts.total_rollouts}')
     return game.winner
 
-def games(settings):
+#RL loop. Unpack the settings and play G number of games. Save rbuf and train anet.
+def RL_actor(settings):
     games = settings['Number of RL episodes']
     board_size = settings['Board size']
     max_rollouts = settings['Max rollout games']
@@ -67,17 +69,18 @@ def games(settings):
 
 if __name__ == "__main__":
     settings = {
-        'Number of RL episodes': 10,
-        'Board size': 4,
+        'Number of RL episodes': 50,
+        'Board size': 5,
         'Max rollout games': 300,
         'Exploration factor': 1,
         'ANET learning rate': 0.01,
-        'ANET layers data': [(25, nn.ReLU()),(16, None)],
+        'ANET layers data': [(25, nn.ReLU()),(25, None)], #last layer must be board_size^2
         'ANET optimizer': optim.Adam,
         'ANET batch size': 128,
         'Save ANETs': False,
         'Print board': True,
         'M cached ANETs': 5,
     }
-    games(settings)
+
+    RL_actor(settings)
             

@@ -1,6 +1,7 @@
 import math
 from copy import deepcopy
 
+#state manager to handle board represenetations, produce states, get and place moves and check winning state. 
 class StateManager:
     def __init__(self, board_size = 4, positions = None, player = 1):
         self.board = Board(board_size, positions, player)
@@ -47,6 +48,7 @@ class StateManager:
     def get_possible_moves(self):
         return self.board.legal_moves()
 
+#HEX logic and game board. Pieces can be placed on the board.
 class Board:
     def __init__(self, board_size = 4, positions = None, player = 1):
         self.board_size = board_size
@@ -121,7 +123,7 @@ class Board:
                     chain.append(n)
         return chain
 
-
+#piece on a HEX board with position and neighbours. 
 class Piece:
     def __init__(self, player = None, position = None):
         self.player = player
@@ -142,6 +144,7 @@ class Piece:
 
 """Functions to print Hex board"""
 
+#update the current board
 def gui_update_board(root, C, game):
     C.delete('all')
     gui_print_board(C, game.get_simple_board(), game.get_win_chain())
@@ -151,6 +154,7 @@ def gui_update_board(root, C, game):
     root.update_idletasks()
     root.update()
 
+#print the board
 def gui_print_board(C, board, chain):
     colours = ['white', 'dodgerblue', 'red']
     for i in range(len(board)):
@@ -162,6 +166,7 @@ def gui_print_board(C, board, chain):
             w = 8 if (i,j) in chain else 4
             C.create_polygon(hexagonal(15,100+((j*2)+(i))*math.sqrt(3)*15,100+(i*2)*((3/2)*15)), fill = colours[board[i][j]], outline='black', width = w)
 
+#create zig-zag lines on the board
 def line(pos,cr,x,y):
     if pos == 'top':
         return -(math.sqrt(3)*cr)+(x), -cr+y-10, 0+x, -2*cr+y-10, (math.sqrt(3)*cr)+x, -cr+y-10
@@ -174,6 +179,7 @@ def line(pos,cr,x,y):
     else:
         return 0,0,0
 
+#create a hexagonal shape on the board
 def hexagonal(cr, x, y):
     a = 0+x, -2*cr+y
     b = (math.sqrt(3)*cr)+x, -cr+y

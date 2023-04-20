@@ -1,7 +1,5 @@
 from anet import TOPP_agent
-from hex import StateManager, gui_update_board, gui_print_board
-from tkinter import Tk, Canvas
-import time
+from hex import StateManager
 import random
 import torch.nn as nn 
 
@@ -31,7 +29,6 @@ def tournament(players, G, board_size):
     for player in players:
         for i in range(len(players)):
             if i != players.index(player):
-                #print(series(player, players[i], int(G/2), board_size))
                 print(str(series(player, players[i], int(G/2), board_size)).replace("{","").replace("}", "").replace("'","").replace(","," -"))
 
 def decision(probability):
@@ -49,18 +46,18 @@ def play_saved_models(G):
     tournament(players, G, board_size)
 
 def play_saved_models_demo(G):
-    board_size = 4
-    layers = [(25, nn.ReLU()),(16, None)]
-    t0 = TOPP_agent(board_size, layers, "saved_models_demo/actor_x.pt")
-    t1 = TOPP_agent(board_size, layers,  "saved_models_demo/actor_x.pt")
-    t2 = TOPP_agent(board_size, layers,"saved_models_demo/actor_x.pt")
-    t3 = TOPP_agent(board_size, layers, "saved_models_demo/actor_x.pt")
-    t4 = TOPP_agent(board_size, layers, "saved_models_demo/actor_x.pt")
+    board_size = 5
+    layers = [(25, nn.ReLU()),(25, None)]
+    t0 = TOPP_agent(board_size, layers, "saved_models_demo/actor_0.pt")
+    t1 = TOPP_agent(board_size, layers,  "saved_models_demo/actor_12.pt")
+    t2 = TOPP_agent(board_size, layers,"saved_models_demo/actor_24.pt")
+    t3 = TOPP_agent(board_size, layers, "saved_models_demo/actor_36.pt")
+    t4 = TOPP_agent(board_size, layers, "saved_models_demo/actor_48.pt")
     players = [t0, t1, t2, t3, t4]
     tournament(players, G, board_size)
 
 
 if __name__ == "__main__":
-    play_saved_models(50)
-    #play_saved_models_demo(50)
+    #play_saved_models(50)
+    play_saved_models_demo(50)
 

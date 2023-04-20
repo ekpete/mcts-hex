@@ -1,18 +1,18 @@
-from hex import StateManager, gui_update_board, gui_print_board
+from hex import StateManager, gui_update_board
 from mcts import MCTS
 from anet import ANET
 from tkinter import Tk, Canvas
 import torch.nn as nn 
 import torch.optim as optim 
 from tqdm import tqdm
-import math
+import time
 
 #play one game of HEX where moves are chosen by MCTS.
-def play(size, max_rollouts, rbuf, root, C, c, anet, print_board):
+def play(size, max_rollouts, rbuf, root, C, c, anet, print_board, tally):
     mcts = MCTS(anet, c)
     game = StateManager(size)
     if print_board:
-        gui_update_board(root, C, game)
+        gui_update_board(root, C, game, tally)
     while game.get_winner() is None:
         mcts.loop(anet, board_size=game.board.board_size,max_rollouts=max_rollouts, board=game.get_board_state(), player=game.get_player())
         rbuf['board'].append(game.get_flattened_board())
@@ -21,7 +21,8 @@ def play(size, max_rollouts, rbuf, root, C, c, anet, print_board):
         game.move(game.get_player(), action)
         mcts.prune_tree(action)
         if print_board:
-            gui_update_board(root, C, game)
+            gui_update_board(root, C, game, tally)
+    time.sleep(0.5)
     #print(f'Rollout games this game: {mcts.total_rollouts}')
     return game.winner
 
@@ -54,14 +55,13 @@ def RL_actor(settings):
     if save:
         anet.save_model(0)
     for g in tqdm(range(games), desc="Progress:"):
-        winner = play(board_size, max_rollouts, rbuf, root, C, c, anet, print_board)
+        winner = play(board_size, max_rollouts, rbuf, root, C, c, anet, print_board, wins)
         if len(rbuf['board'])>batch_size:
             anet.train(rbuf, batch_size)
         if (int(g+1) % int(save_interval) == 0) and save:
             anet.save_model(g+1)
         wins[f'player{winner}'] += 1
     print(f"RBUF size: {len(rbuf['board'])}")
-    print(f"\nPlayer 1: {wins['player1']} wins.\nPlayer 2: {wins['player2']} wins.")
     anet.print_losses()
     if print_board:
         root.mainloop()
@@ -69,12 +69,12 @@ def RL_actor(settings):
 
 if __name__ == "__main__":
     settings = {
-        'Number of RL episodes': 50,
+        'Number of RL episodes': 20,
         'Board size': 5,
         'Max rollout games': 300,
         'Exploration factor': 1,
         'ANET learning rate': 0.01,
-        'ANET layers data': [(25, nn.ReLU()),(25, None)], #last layer must be board_size^2
+        'ANET layers data': [(30, nn.ReLU()),(30, nn.ReLU()),(25, None)], #last layer must be board_size^2
         'ANET optimizer': optim.Adam,
         'ANET batch size': 128,
         'Save ANETs': False,

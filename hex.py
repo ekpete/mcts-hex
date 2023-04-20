@@ -145,12 +145,13 @@ class Piece:
 """Functions to print Hex board"""
 
 #update the current board
-def gui_update_board(root, C, game):
+def gui_update_board(root, C, game, tally={"player1": 0, "player2": 0}):
     C.delete('all')
     gui_print_board(C, game.get_simple_board(), game.get_win_chain())
     w = game.get_winner()
     if w == 1 or w == 2:
-        C.create_text(C.winfo_width()/2,C.winfo_height()-20,fill="black",font="Helvetica 15 bold", text=f"Player {w} wins!")
+        pass
+    C.create_text(C.winfo_width()/2,C.winfo_height()-20,fill="black",font="Helvetica 15 bold", text=f"Blue {tally['player1']} - {tally['player2']} Red")
     root.update_idletasks()
     root.update()
 
